@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Gemini Chatbot</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f4f4f4;
+      margin: 0;
+    }
+
+    .chatbot-container {
+      width: 400px;
+      height: 600px;
+      background: #373844;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-radius: 10px;
+    }
+
+    .header {
+      padding: 15px;
+      background-color: #172088;
+      color: white;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+
+    .chat-window {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .messages {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .message {
+      padding: 8px 12px;
+      border-radius: 8px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+
+    .user-message {
+      align-self: flex-end;
+      background: #d1e7dd;
+    }
+
+    .bot-message {
+      align-self: flex-start;
+      background: #f8d7da;
+    }
+
+    .input-area {
+      display: flex;
+      padding: 10px;
+      background: #eee;
+      border-top: 1px solid #ccc;
+    }
+
+    #user-input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      outline: none;
+    }
+
+    #send-btn {
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    #send-btn:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="chatbot-container">
+    <div class="header">Google Gemini Chatbot</div>
+    <div class="chat-window">
+      <div class="messages" id="messages"></div>
+    </div>
+    <div class="input-area">
+      <input type="text" id="user-input" placeholder="Type your message here..." />
+      <button id="send-btn">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const API_KEY = "AIzaSyAWiH1ei_RmbUBGtRqmkyfZWv98nZrPxtU"; // अपनी API Key यहां डालें
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`;
+
+    const messagesContainer = document.getElementById("messages");
+    const userInput = document.getElementById("user-input");
+    const sendBtn = document.getElementById("send-btn");
+
+    sendBtn.addEventListener("click", () => {
+      const userMessage = userInput.value.trim();
+      if (userMessage) {
+        appendMessage(userMessage, "user-message");
+        userInput.value = "";
+        getBotResponse(userMessage);
+      }
+    });
+
+    function appendMessage(text, className) {
+      const messageDiv = document.createElement("div");
+      messageDiv.className = `message ${className}`;
+      messageDiv.innerHTML = text.replace(/\n/g, "<br>");
+      messagesContainer.appendChild(messageDiv);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    async function getBotResponse(userMessage) {
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: userMessage }
+                ]
+              }
+            ]
+          }),
+        });
+
+        if (!response.ok) {
+          appendMessage("Error: Unable to fetch response. Check your API key or network.", "bot-message");
+          return;
+        }
+
+        const data = await response.json();
+        console.log("API Response:", data);
+
+        if (data.candidates && data.candidates.length > 0) {
+          let botMessage = data.candidates[0].content.parts[0].text.trim() || "No response.";
+          appendMessage(botMessage, "bot-message");
+        } else {
+          appendMessage("No response received from the bot.", "bot-message");
+        }
+      } catch (error) {
+        console.error("Network Error:", error);
+        appendMessage("Error connecting to API. Please check your network or API settings.", "bot-message");
+      }
+    }
+  </script>
+
+</body>
+</html>
